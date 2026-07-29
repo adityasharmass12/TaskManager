@@ -4,99 +4,135 @@ const mongoose = require('mongoose');
 const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
 
 const getTasks = async (req, res) => {
+  const { search } = req.query;
+  console.log('Loading tasks with search:', search || '');
+
   try {
-    const { search } = req.query;
     const tasks = await taskService.getAllTasks(search);
-    res.json(tasks);
-  } catch (err) {
-    res.status(500).json({ message: 'Failed to fetch tasks' });
+    console.log('Tasks loaded:', tasks.length);
+    return res.json(tasks);
+  } catch (error) {
+    console.error('Failed to fetch tasks:', error);
+    return res.status(500).json({ message: 'Failed to fetch tasks' });
   }
 };
 
 const getTask = async (req, res) => {
+  const { id } = req.params;
+  console.log('Loading task:', id);
+
+  if (!isValidObjectId(id)) {
+    return res.status(400).json({ message: 'Invalid task ID' });
+  }
+
   try {
-    if (!isValidObjectId(req.params.id)) {
-      return res.status(400).json({ message: 'Invalid task ID' });
-    }
-    const task = await taskService.getTaskById(req.params.id);
+    const task = await taskService.getTaskById(id);
     if (!task) {
       return res.status(404).json({ message: 'Task not found' });
     }
-    res.json(task);
-  } catch (err) {
-    res.status(500).json({ message: 'Failed to fetch task' });
+
+    return res.json(task);
+  } catch (error) {
+    console.error('Failed to fetch task:', error);
+    return res.status(500).json({ message: 'Failed to fetch task' });
   }
 };
 
 const createTask = async (req, res) => {
+  const { title, description } = req.body;
+  console.log('Creating task:', req.body);
+
+  if (!title || !title.trim()) {
+    return res.status(400).json({ message: 'Title cannot be empty' });
+  }
+
   try {
-    const { title, description } = req.body;
-    if (!title || !title.trim()) {
-      return res.status(400).json({ message: 'Title cannot be empty' });
-    }
-    const task = await taskService.createTask({ title: title.trim(), description });
-    res.status(201).json(task);
-  } catch (err) {
-    if (err.name === 'ValidationError') {
-      return res.status(400).json({ message: err.message });
-    }
-    res.status(500).json({ message: 'Failed to create task' });
+    const task = await taskService.createTask({
+      title: title.trim(),
+      description,
+    });
+
+    console.log('Task created:', task._id);
+    return res.status(201).json(task);
+  } catch (error) {
+    console.error('Failed to create task:', error);
+    return res.status(400).json({ message: error.message || 'Failed to create task' });
   }
 };
 
 const updateTask = async (req, res) => {
+  const { id } = req.params;
+  const { title } = req.body;
+  console.log('Updating task:', id, req.body);
+
+  if (!isValidObjectId(id)) {
+    return res.status(400).json({ message: 'Invalid task ID' });
+  }
+
+  if (title !== undefined && !title.trim()) {
+    return res.status(400).json({ message: 'Title cannot be empty' });
+  }
+
   try {
-    if (!isValidObjectId(req.params.id)) {
-      return res.status(400).json({ message: 'Invalid task ID' });
-    }
-    const { title } = req.body;
-    if (title !== undefined && !title.trim()) {
-      return res.status(400).json({ message: 'Title cannot be empty' });
-    }
-    const task = await taskService.updateTask(req.params.id, req.body);
+    const task = await taskService.updateTask(id, req.body);
     if (!task) {
       return res.status(404).json({ message: 'Task not found' });
     }
-    res.json(task);
-  } catch (err) {
-    if (err.name === 'ValidationError') {
-      return res.status(400).json({ message: err.message });
-    }
-    res.status(500).json({ message: 'Failed to update task' });
+
+    console.log('Task updated:', task._id);
+    return res.json(task);
+  } catch (error) {
+    console.error('Failed to update task:', error);
+    return res.status(400).json({ message: error.message || 'Failed to update task' });
   }
 };
 
 const patchStatus = async (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+  console.log('Updating status:', id, status);
+
+  if (!isValidObjectId(id)) {
+    return res.status(400).json({ message: 'Invalid task ID' });
+  }
+
+  if (!['pending', 'completed'].includes(status)) {
+    return res.status(400).json({ message: 'Status must be pending or completed' });
+  }
+
   try {
-    if (!isValidObjectId(req.params.id)) {
-      return res.status(400).json({ message: 'Invalid task ID' });
-    }
-    const { status } = req.body;
-    if (!['pending', 'completed'].includes(status)) {
-      return res.status(400).json({ message: 'Status must be pending or completed' });
-    }
-    const task = await taskService.updateTaskStatus(req.params.id, status);
+    const task = await taskService.updateTaskStatus(id, status);
     if (!task) {
       return res.status(404).json({ message: 'Task not found' });
     }
-    res.json(task);
-  } catch (err) {
-    res.status(500).json({ message: 'Failed to update status' });
+
+    console.log('Task status updated:', task._id, task.status);
+    return res.json(task);
+  } catch (error) {
+    console.error('Failed to update status:', error);
+    return res.status(500).json({ message: 'Failed to update status' });
   }
 };
 
 const removeTask = async (req, res) => {
+  const { id } = req.params;
+  console.log('Deleting task:', id);
+
+  if (!isValidObjectId(id)) {
+    return res.status(400).json({ message: 'Invalid task ID' });
+  }
+
   try {
-    if (!isValidObjectId(req.params.id)) {
-      return res.status(400).json({ message: 'Invalid task ID' });
-    }
-    const task = await taskService.deleteTask(req.params.id);
+    const task = await taskService.deleteTask(id);
     if (!task) {
       return res.status(404).json({ message: 'Task not found' });
     }
-    res.json({ message: 'Task deleted' });
-  } catch (err) {
-    res.status(500).json({ message: 'Failed to delete task' });
+
+    console.log('Task deleted:', id);
+    return res.json({ message: 'Task deleted' });
+  } catch (error) {
+    console.error('Failed to delete task:', error);
+    return res.status(500).json({ message: 'Failed to delete task' });
   }
 };
 

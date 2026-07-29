@@ -7,41 +7,51 @@ function TaskItem({ task, onDelete, onStatusChange, onUpdate }) {
   const [busy, setBusy] = useState(false);
 
   const handleToggleStatus = async () => {
+    const nextStatus = task.status === 'pending' ? 'completed' : 'pending';
+    console.log('Toggling task status:', task._id, nextStatus);
     setBusy(true);
+
     try {
-      const newStatus = task.status === 'pending' ? 'completed' : 'pending';
-      await onStatusChange(task._id, newStatus);
-    } catch (e) {
-      console.error(e);
+      await onStatusChange(task._id, nextStatus);
+    } catch (error) {
+      console.error('Failed to toggle status:', error);
     } finally {
       setBusy(false);
     }
   };
 
   const handleDelete = async () => {
+    console.log('Deleting task item:', task._id);
     setBusy(true);
+
     try {
       await onDelete(task._id);
-    } catch (e) {
-      console.error(e);
+    } catch (error) {
+      console.error('Failed to delete task:', error);
+    } finally {
       setBusy(false);
     }
   };
 
   const handleSaveEdit = async () => {
     if (!editTitle.trim()) return;
+
+    const payload = { title: editTitle.trim(), description: editDesc.trim() };
+    console.log('Saving task edit:', task._id, payload);
     setBusy(true);
+
     try {
-      await onUpdate(task._id, { title: editTitle.trim(), description: editDesc.trim() });
+      await onUpdate(task._id, payload);
       setEditing(false);
-    } catch (e) {
-      console.error(e);
+    } catch (error) {
+      console.error('Failed to save task edit:', error);
     } finally {
       setBusy(false);
     }
   };
 
   const handleCancelEdit = () => {
+    console.log('Canceling edit for task:', task._id);
     setEditTitle(task.title);
     setEditDesc(task.description);
     setEditing(false);

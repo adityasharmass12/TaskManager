@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import {
   fetchTasks,
   createTask,
@@ -15,47 +15,56 @@ function App() {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [searchTerm, setSearchTerm] = useState('');
 
-  const loadTasks = useCallback(async (search = '') => {
+  const loadTasks = async (search = '') => {
+    console.log('Loading tasks for search:', search);
     setLoading(true);
     setError('');
+
     try {
       const res = await fetchTasks(search);
+      console.log('Tasks loaded count:', res.data.length);
       setTasks(res.data);
-    } catch (err) {
-      setError(err.response?.data?.message || 'Failed to load tasks');
+    } catch (error) {
+      console.error('Failed to load tasks:', error);
+      setError(error.response?.data?.message || 'Failed to load tasks');
     } finally {
       setLoading(false);
     }
-  }, []);
+  };
 
   useEffect(() => {
+    console.log('App mounted');
     loadTasks();
-  }, [loadTasks]);
+  }, []);
 
   const handleAdd = async (taskData) => {
+    console.log('Submitting new task:', taskData);
     const res = await createTask(taskData);
+    console.log('Task added:', res.data._id);
     setTasks((prev) => [res.data, ...prev]);
   };
 
   const handleUpdate = async (id, data) => {
+    console.log('Updating task from UI:', id, data);
     const res = await updateTask(id, data);
     setTasks((prev) => prev.map((t) => (t._id === id ? res.data : t)));
   };
 
   const handleStatusChange = async (id, status) => {
+    console.log('Changing task status:', id, status);
     const res = await patchTaskStatus(id, status);
     setTasks((prev) => prev.map((t) => (t._id === id ? res.data : t)));
   };
 
   const handleDelete = async (id) => {
+    console.log('Deleting task from UI:', id);
     await deleteTask(id);
     setTasks((prev) => prev.filter((t) => t._id !== id));
   };
 
   const handleSearch = (query) => {
-    setSearchTerm(query);
+    console.log('Searching tasks:', query);
     loadTasks(query);
   };
 
