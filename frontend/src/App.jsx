@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import './App.css';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/tasks';
@@ -147,7 +147,7 @@ function App() {
     setEditDescription(task.description || '');
   };
 
-  const visibleTasks = useMemo(() => tasks, [tasks]);
+  const visibleTasks = tasks;
   const pendingCount = visibleTasks.filter((task) => task.status === 'pending').length;
   const completedCount = visibleTasks.filter((task) => task.status === 'completed').length;
 
