@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import './App.css';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/tasks';
+// In production we want to call the same origin so Vercel rewrites to the backend service.
+// For local development you can set `VITE_API_URL` to "http://localhost:5000/api/tasks".
+const API_URL = import.meta.env.VITE_API_URL || '/api/tasks';
 
 function App() {
   const [tasks, setTasks] = useState([]);
